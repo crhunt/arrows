@@ -16,8 +16,10 @@ gd = {};
     gd.model = function() {
 
         var nodes = {},
+            roleboxes = {},
             relationships = [],
             highestId = 0,
+            highestRBId = 0,
             internalScale = 1,
             externalScale = 1;
 
@@ -155,7 +157,7 @@ gd = {};
             this.angleTo = function(node) {
                 var dx = node.x() - this.x();
                 var dy = node.y() - this.y();
-                return Math.atan2(dy, dx) * 180 / Math.PI
+                return Math.atan2(dy, dx) * 180 / Math.PI;
             };
 
             this.isLeftOf = function(node) {
@@ -229,6 +231,132 @@ gd = {};
             this.style = styleSet(model.stylePrototype.relationship);
         };
 
+        var Rolebox = function() {
+            var position = {};
+            var prototypePosition;
+            var caption;
+            var classes = [];
+            var properties = new Properties(model.stylePrototype.roleboxProperties);
+
+            this.class = function(classesString) {
+                if (arguments.length == 1) {
+                    classes = classesString.split(" ").filter(function(className) {
+                        return className.length > 0 && className != "rolebox";
+                    });
+                    return this;
+                }
+                return ["rolebox"].concat(classes);
+            };
+
+            this.x = function(x) {
+                if (arguments.length == 1) {
+                    position.x = Number(x);
+                    return this;
+                }
+                return position.x;
+            };
+
+            this.y = function(y) {
+                if (arguments.length == 1) {
+                    position.y = Number(y);
+                    return this;
+                }
+                return position.y;
+            };
+
+            this.ex = function() {
+                return position.x * internalScale;
+            };
+
+            this.ey = function() {
+                return position.y * internalScale;
+            };
+
+            this.distanceTo = function(rolebox) {
+                var dx = rolebox.x() - this.x();
+                var dy = rolebox.y() - this.y();
+                return Math.sqrt(dx * dx + dy * dy) * internalScale;
+            };
+
+            function snap( position, field, rolebox )
+            {
+                var ideal = position[field];
+                var closestRolebox;
+                var closestDistance = Number.MAX_VALUE;
+                for (var roleboxId in roleboxes) {
+                    if (roleboxes.hasOwnProperty(roleboxId)) {
+                        var candidateRolebox = roleboxes[roleboxId];
+                        if ( candidateRolebox != rolebox )
+                        {
+                            var distance = Math.abs(candidateRolebox[field]() - ideal);
+                            if (distance < closestDistance)
+                            {
+                                closestRolebox = candidateRolebox;
+                                closestDistance = distance;
+                            }
+                        }
+                    }
+                }
+                if (closestDistance < gd.parameters.snapTolerance)
+                {
+                    return closestRolebox[field]();
+                }
+                else
+                {
+                    return position[field];
+                }
+            }
+
+            this.drag = function(dx, dy) {
+                if (!prototypePosition)
+                {
+                    prototypePosition = {
+                        x: position.x,
+                        y: position.y
+                    }
+                }
+                prototypePosition.x += dx / internalScale;
+                prototypePosition.y += dy / internalScale;
+                position.x = snap(prototypePosition, "x", this);
+                position.y = snap(prototypePosition, "y", this);
+            };
+
+            this.dragEnd = function()
+            {
+                prototypePosition = undefined;
+            };
+
+            this.distance = function() {
+                var dx = node.x() - this.x();
+                var dy = node.y() - this.y();
+                return Math.sqrt(dx * dx + dy * dy) * internalScale;
+            };
+
+            this.angleTo = function(rolebox) {
+                var dx = rolebox.x() - this.x();
+                var dy = rolebox.y() - this.y();
+                return Math.atan2(dy, dx) * 180 / Math.PI;
+            };
+
+            this.isLeftOf = function(rolebox) {
+                return this.x() < rolebox.x();
+            };
+
+            this.caption = function(captionText) {
+                if (arguments.length == 1) {
+                    caption = captionText;
+                    return this;
+                }
+                return caption;
+            };
+
+            this.properties = function() {
+                return properties;
+            };
+
+            this.style = styleSet(model.stylePrototype.rolebox);
+        };
+
         var Properties = function(stylePrototype) {
             var keys = [];
             var values = {};
@@ -262,12 +390,27 @@ gd = {};
             return highestId;
         }
 
+        function generateRoleboxId() {
+            while (roleboxes[highestRBId]) {
+                highestRBId++;
+            }
+            return highestRBId;
+        }
+
         model.createNode = function(optionalNodeId) {
             var nodeId = optionalNodeId || generateNodeId();
             var node = new Node();
             node.id = nodeId;
             nodes[nodeId] = node;
             return node;
+        };
+
+        model.createRolebox = function(optionalRoleboxId) {
+            var roleboxId = optionalRoleboxId || generateRoleboxId();
+            var rolebox = new Rolebox();
+            rolebox.id = roleboxId;
+            roleboxes[roleboxId] = rolebox;
+            return rolebox;
         };
 
         model.deleteNode = function(node) {
@@ -297,8 +440,22 @@ gd = {};
             return list;
         };
 
+        model.roleboxList = function() {
+            var list = [];
+            for (var roleboxId in roleboxes) {
+                if (roleboxes.hasOwnProperty(roleboxId)) {
+                    list.push(roleboxes[roleboxId]);
+                }
+            }
+            return list;
+        };
+
         model.lookupNode = function(nodeId) {
             return nodes[nodeId];
+        };
+
+        model.lookupRolebox = function(roleboxId) {
+            return roleboxes[roleboxId];
         };
 
         model.relationshipList = function() {
@@ -352,7 +509,9 @@ gd = {};
             node: new SimpleStyle(),
             nodeProperties: new SimpleStyle(),
             relationship: new SimpleStyle(),
-            relationshipProperties: new SimpleStyle()
+            relationshipProperties: new SimpleStyle(),
+            rolebox: new SimpleStyle(),
+            roleboxProperties: new SimpleStyle(),
         };
 
         return model;
@@ -364,10 +523,12 @@ gd = {};
             graphModel: graphModel,
             nodes: [],
             relationships: [],
-            relationshipGroups: []
+            relationshipGroups: [],
+            roleboxes: []
         };
 
         var nodesById = {};
+        var roleboxesById = {};
 
         graphModel.nodeList().forEach( function ( node )
         {
@@ -385,6 +546,24 @@ gd = {};
             };
             nodesById[node.id] = layoutNode;
             layoutModel.nodes.push(layoutNode);
+        } );
+
+        graphModel.roleboxList().forEach( function ( rolebox )
+        {
+            var measurement = gd.wrapAndMeasureCaption( rolebox );
+
+            var layoutRolebox = {
+                class: rolebox.class,
+                x: rolebox.ex(),
+                y: rolebox.ey(),
+                radius: measurement.radius,
+                captionLines: measurement.captionLines,
+                captionLineHeight: measurement.captionLineHeight,
+                properties: gd.nodeSpeechBubble( graphModel )( rolebox, measurement.radius ),
+                model: rolebox
+            };
+            roleboxesById[rolebox.id] = layoutRolebox;
+            layoutModel.roleboxes.push(layoutRolebox);
         } );
 
         function horizontalArrow(relationship, start, end, offset) {
@@ -689,6 +868,12 @@ gd = {};
             copyStyles(model.stylePrototype.relationshipProperties, relationshipPropertiesPrototype);
             relationshipPrototype.remove();
 
+            var roleboxPrototype = selection.append("li" ).attr("class", "rolebox");
+            var roleboxPropertiesPrototype = roleboxPrototype.append("dl" ).attr("class", "properties");
+            copyStyles(model.stylePrototype.rolebox, roleboxPrototype);
+            copyStyles(model.stylePrototype.roleboxProperties, roleboxPropertiesPrototype);
+            roleboxPrototype.remove();
+
             function parseProperties(entity)
             {
                 return function() {
@@ -741,6 +926,21 @@ gd = {};
                 relationshipMarkup.select( "dl.properties" ).each( parseProperties( relationship ) );
 
                 copyStyles(relationship, relationshipMarkup);
+            });
+
+            selection.selectAll(".rolebox").each(function () {
+                var roleboxMarkup = d3.select(this);
+                var RBid = roleboxMarkup.attr("data-rolebox-id");
+                var rolebox = model.createRolebox(RBid);
+                rolebox.class(roleboxMarkup.attr("class") || "");
+                rolebox.x(roleboxMarkup.attr("data-x"));
+                rolebox.y(roleboxMarkup.attr("data-y"));
+                roleboxMarkup.select("span.caption").each(function() {
+                    rolebox.caption(d3.select(this).text());
+                });
+                roleboxMarkup.select( "dl.properties" ).each( parseProperties( rolebox ) );
+
+                copyStyles(rolebox, roleboxMarkup);
             });
 
             return model;
@@ -799,6 +999,21 @@ gd = {};
                     .attr("class", "predicate")
                     .attr("value", relationship.relationshipPredicate());
                 formatProperties( relationship, li );
+            });
+
+            model.roleboxList().forEach(function(rolebox) {
+                var li = ul.append("li")
+                    .attr("class", rolebox.class().join(" "))
+                    .attr("data-node-id", rolebox.id)
+                    .attr("data-x", rolebox.x())
+                    .attr("data-y", rolebox.y());
+
+                if (rolebox.caption()) {
+                    li.append("span")
+                        .attr("class", "caption")
+                        .text(rolebox.caption());
+                }
+                formatProperties( rolebox, li );
             });
         };
 
@@ -1563,6 +1778,77 @@ gd = {};
 
         }
 
+        function renderRoleboxes( roleboxes, view )
+        {
+            function nodeClasses(d) {
+                return d.model.class().join(" ") + " " + "rolebox-id-" + d.model.id;
+            }
+
+            var circles = view.selectAll("circle.rolebox")
+                .data(roleboxes);
+
+            circles.exit().remove();
+
+            circles.enter().append("svg:circle")
+                .attr("class", nodeClasses);
+
+            circles
+                .attr("r", function(rolebox) {
+                    return rolebox.radius.mid();
+                })
+                .attr("fill", function(rolebox) {
+                    return rolebox.model.style("background-color");
+                })
+                .attr("stroke", function(rolebox) {
+                    return rolebox.model.style("border-color");
+                })
+                .attr("stroke-width", function(rolebox) {
+                    return rolebox.model.style("border-width");
+                })
+                .attr("cx", field("x"))
+                .attr("cy", field("y"));
+
+            function captionClasses(d) {
+                return "caption " + d.rolebox.model.class();
+            }
+
+            var captionGroups = view.selectAll("g.caption")
+                .data(roleboxes.filter(function(rolebox) { return rolebox.model.caption(); }));
+
+            captionGroups.exit().remove();
+
+            captionGroups.enter().append("g")
+                .attr("class", "caption");
+
+            var captions = captionGroups.selectAll("text.caption")
+                .data( function ( rolebox )
+                {
+                    return rolebox.captionLines.map( function ( line )
+                    {
+                        return { rolebox: rolebox, caption: line }
+                    } );
+                } );
+
+            captions.exit().remove();
+
+            captions.enter().append("svg:text")
+                .attr("class", captionClasses)
+                .attr("vertical-align", "middle")
+                .attr("text-anchor", "middle")
+                .attr("alignment-baseline", "central") // central
+                // Firefox compatibility fuckery
+                .attr("dy", "0.3em")
+                .attr("baseline-shift", "0.3em");
+
+            captions
+                .attr("x", function ( line ) { return line.node.model.ex(); })
+                .attr("y", function ( line, i ) { return line.node.model.ey() + (i - (line.node.captionLines.length - 1) / 2) * line.node.captionLineHeight; })
+                .attr( "fill", function ( line ) { return line.node.model.style( "color" ); } )
+                .attr( "font-size", function ( line ) { return line.node.model.style( "font-size" ); } )
+                .attr( "font-family", function ( line ) { return line.node.model.style( "font-family" ); } )
+                .text(function(d) { return d.caption; });
+        }
+
         function renderProperties( entities, descriminator, view )
         {
             var speechBubbleGroup = view.selectAll( "g.speech-bubble." + descriminator + "-speech-bubble" )
@@ -1688,6 +1974,7 @@ gd = {};
 
                 renderRelationships( layoutModel.relationshipGroups, layer("relationships") );
                 renderNodes( layoutModel.nodes, layer("nodes") );
+                renderRoleboxes( layoutModel.roleboxes, layer("roleboxes") );
 
                 renderProperties( layoutModel.nodes, "node", layer("properties") );
                 renderProperties( layoutModel.relationships, "relationship", layer("properties") );

@@ -213,6 +213,13 @@ window.onload = function()
         draw();
     } );
 
+    d3.select( "#add_rolebox_button" ).on( "click", function ()
+    {
+        graphModel.createRolebox().x( 0 ).y( 0 );
+        save( formatMarkup() );
+        draw();
+    } );
+
     function onControlEnter(saveChange)
     {
         return function()
