@@ -29,6 +29,7 @@ window.onload = function()
             nodeOverlays.enter().append("circle")
                 .attr("class", "node overlay")
                 .call( d3.behavior.drag().on( "drag", drag ).on( "dragend", dragEnd ) )
+                .on('contextmenu', d3.contextMenu(nodeOptions))
                 .on( "dblclick", editNode );
 
             nodeOverlays
@@ -72,11 +73,15 @@ window.onload = function()
 
             relationshipsOverlays.exit().remove();
 
+            var container = d3.select( "body" ).append( "div" );
+
             relationshipsOverlays.enter().append("path")
                 .attr("class", "relationship overlay")
                 .attr("fill", "rgba(255, 255, 255, 0)")
                 .attr("stroke", "rgba(255, 255, 255, 0)")
                 .attr("stroke-width", "10px")
+                //.append("g")
+                .on('contextmenu', d3.contextMenu(relOptions))
                 .on( "dblclick", editRelationship );
 
             relationshipsOverlays
@@ -86,6 +91,34 @@ window.onload = function()
                 } )
                 .attr("d", function(d) { return d.arrow.outline; } );
         });
+
+    var relOptions =
+    [
+        {
+          title: 'Reverse',
+          action: function(elm, d, i) { reverseRelationshipDirect.call(elm); }
+        },
+        {
+          title: 'Delete',
+          action: function(elm, d, i) { deleteRelationshipDirect.call(elm); }
+        },
+        {
+          title: 'ORM',
+          action: function(elm, d, i) { editRelationship.call(elm); }
+        }
+    ];
+
+    var nodeOptions =
+    [
+        {
+          title: 'Delete',
+          action: function(elm, d, i) { deleteNodeDirect.call(elm); }
+        },
+        {
+          title: 'Properties',
+          action: function(elm, d, i) { editNode.call(elm); }
+        }
+    ];
 
     function draw()
     {
@@ -191,6 +224,14 @@ window.onload = function()
         }
     }
 
+    function deleteNodeDirect()
+    {
+        var node = this.__data__.model;
+        graphModel.deleteNode(node);
+        save( formatMarkup() );
+        draw();
+    }
+
     function editNode()
     {
         var editor = d3.select(".pop-up-editor.node");
@@ -242,6 +283,21 @@ window.onload = function()
         editor.select("#edit_node_delete").on("click", deleteNode);
     }
 
+	function reverseRelationshipDirect()
+	{
+		var relationship = this.__data__.model;
+        relationship.reverse();
+        save( formatMarkup() );
+        draw();
+    }
+    function deleteRelationshipDirect()
+    {
+        var relationship = this.__data__.model;
+        graphModel.deleteRelationship(relationship);
+        save( formatMarkup() );
+        draw();
+	}
+
     function editRelationship()
     {
         var editor = d3.select(".pop-up-editor.relationship");
@@ -254,6 +310,14 @@ window.onload = function()
         relationshipTypeField.node().value = relationship.relationshipType() || "";
         relationshipTypeField.node().select();
 
+        // Highlight current predicate
+        editor.select( "#pred_" + relationship.relationshipPredicate() ).property("checked", true);
+
+        // Create sentence
+        var entity1 = ( relationship.start.caption() + " " || "[Entity"+relationship.start.id+"] " );
+        var entity2 = ( " " + relationship.end.caption() || " [Entity"+relationship.end.id+"]" );
+        editor.select("#relation_statement").node().innerHTML = entity1 + (relationship.relationshipType() || "[Role Name]") + entity2 + ".";
+
         var propertiesField = editor.select("#relationship_properties");
         propertiesField.node().value = relationship.properties().list().reduce(function(previous, property) {
             return previous + property.key + ": " + property.value + "\n";
@@ -261,6 +325,8 @@ window.onload = function()
 
         function saveChange()
         {
+            var predicateField = editor.select('input[name="relationship_predicate"]:checked');
+            relationship.relationshipPredicate( predicateField.node().value );
             relationship.relationshipType( relationshipTypeField.node().value );
             relationship.properties().clearAll();
             propertiesField.node().value.split("\n").forEach(function(line) {
@@ -327,47 +393,9 @@ window.onload = function()
 
     function appendModalBackdrop()
     {
-        d3.select( "body" ).append( "div" )
+        d3.select( ".bgmain" ).append( "div" )
             .attr( "class", "modal-backdrop" )
             .on( "click", cancelModal );
-    }
-
-    var exportToArrowsApp = function ()
-    {
-        let relationshipIdSeq = 0
-
-        const arrowsAppModel = {
-            diagramName: 'Imported from https://www.apcjones.com/arrows/',
-            graph: {
-                nodes: graphModel.nodeList().map(node => ({
-                    id: 'n' + node.id,
-                    position: {
-                        x: node.x(),
-                        y: node.y()
-                    },
-                    caption: node.caption(),
-                    properties: Object.fromEntries(node.properties().list().map(property => [
-                        property.key,
-                        property.value
-                    ]))
-                })),
-                relationships: graphModel.relationshipList().map(relationship => ({
-                    id: 'n' + relationshipIdSeq++,
-                    fromId: 'n' + relationship.start.id,
-                    toId: 'n' + relationship.end.id,
-                    type: relationship.relationshipType() || '',
-                    properties: Object.fromEntries(relationship.properties().list().map(property => [
-                        property.key,
-                        property.value
-                    ]))
-                })),
-                style: {}
-            }
-        }
-
-        const jsonString = JSON.stringify(arrowsAppModel)
-        const url = "https://arrows.app/#/import/json=" + btoa(jsonString)
-        window.open(url)
     }
 
     var exportMarkup = function ()
@@ -431,6 +459,25 @@ window.onload = function()
             .node().value = statement;
     };
 
+    var exportDelve = function ()
+    {
+        appendModalBackdrop();
+        d3.select( ".modal.export-delve" ).classed( "hide", false );
+
+        var statement = gd.delve(graphModel);
+        d3.select( ".export-delve .modal-body textarea.code" )
+            .attr( "rows", statement.split( "\n" ).length )
+            .node().value = statement;
+    };
+
+    var exportDelveSidebar = function ()
+    {
+        var statement = gd.delve(graphModel);
+        d3.select( ".sidenav textarea.code" )
+            .attr( "rows", statement.split( "\n" ).length )
+            .node().value = statement;
+    };
+
 
     var chooseStyle = function()
     {
@@ -438,16 +485,20 @@ window.onload = function()
         d3.select( ".modal.choose-style" ).classed( "hide", false );
     };
 
-    d3.select("#saveStyle" ).on("click", function() {
-        var selectedStyle = d3.selectAll("input[name=styleChoice]" )[0]
-            .filter(function(input) { return input.checked; })[0].value;
+    d3.selectAll("input[name=styleChoice]" ).on("click", function() {
+        //var selectedStyle = d3.selectAll("input[name=styleChoice]" )[0]
+        //    .filter(function(input) { return input.checked; })[0].value;
+        var selectedStyle = d3.select('input[name="styleChoice"]:checked').node().value ;
+
         d3.select("link.graph-style")
             .attr("href", "style/" + selectedStyle);
-
         graphModel = parseMarkup( localStorage.getItem( "graph-diagram-markup" ) );
-        save(formatMarkup());
-        draw();
-        cancelModal();
+
+        //save(formatMarkup());
+        //draw();
+        let wait = async function() { save(formatMarkup()) };
+        wait().then(draw());
+
     });
 
     function changeInternalScale() {
@@ -458,9 +509,10 @@ window.onload = function()
 
     d3.select(window).on("resize", draw);
     d3.select("#internalScale" ).on("change", changeInternalScale);
-    d3.select( "#exportToArrowsAppButton" ).on( "click", exportToArrowsApp );
     d3.select( "#exportMarkupButton" ).on( "click", exportMarkup );
-	  d3.select( "#exportCypherButton" ).on( "click", exportCypher );
+	d3.select( "#exportCypherButton" ).on( "click", exportCypher );
+    d3.select( "#exportDelveButton" ).on( "click", exportDelve );
+    d3.select( "#openSideNav" ).on( "click", exportDelveSidebar );
     d3.select( "#chooseStyleButton" ).on( "click", chooseStyle );
     d3.selectAll( ".modal-dialog" ).on( "click", function ()
     {

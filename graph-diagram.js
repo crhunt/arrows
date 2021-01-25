@@ -179,6 +179,7 @@ gd = {};
 
         var Relationship = function(start, end) {
             var relationshipType;
+            var relationshipPredicate;
             var classes = [];
             var properties = new Properties(model.stylePrototype.relationshipProperties);
 
@@ -198,6 +199,18 @@ gd = {};
                     return this;
                 }
                 return relationshipType;
+            };
+
+            this.relationshipPredicate = function(relationshipPredText) {
+                if (arguments.length == 1) {
+                    if (relationshipPredText.length > 0) {
+                        relationshipPredicate = relationshipPredText;
+                    } else {
+                        relationshipPredicate = "binary";
+                    }
+                    return this;
+                }
+                return relationshipPredicate;
             };
 
             this.start = start;
@@ -377,9 +390,11 @@ gd = {};
         function horizontalArrow(relationship, start, end, offset) {
             var length = start.model.distanceTo(end.model);
             var arrowWidth = parsePixels( relationship.style( "width" ) );
+            var predicate = relationship.relationshipPredicate();
             if (offset === 0)
             {
                 return gd.horizontalArrowOutline(
+                    predicate,
                     start.radius.startRelationship(),
                     (length - end.radius.endRelationship()),
                     arrowWidth );
@@ -720,6 +735,9 @@ gd = {};
                 relationshipMarkup.select("span.type" ).each(function() {
                     relationship.relationshipType(d3.select(this).text());
                 });
+                relationshipMarkup.select("span.predicate" ).each(function() {
+                    relationship.relationshipPredicate( d3.select(this).attr("value") ); // d3.select(this).attr("value")
+                });
                 relationshipMarkup.select( "dl.properties" ).each( parseProperties( relationship ) );
 
                 copyStyles(relationship, relationshipMarkup);
@@ -777,6 +795,9 @@ gd = {};
                         .attr("class", "type")
                         .text(relationship.relationshipType());
                 }
+                li.append("span")
+                    .attr("class", "predicate")
+                    .attr("value", relationship.relationshipPredicate());
                 formatProperties( relationship, li );
             });
         };
@@ -784,27 +805,12 @@ gd = {};
         return markup;
     }();
 
-    gd.horizontalArrowOutline = function(start, end, arrowWidth) {
-        var shaftRadius = arrowWidth / 2;
-        var headRadius = arrowWidth * 2;
-        var headLength = headRadius * 2;
-        var shoulder = start < end ? end - headLength : end + headLength;
-        return {
-            outline: [
-                "M", start, shaftRadius,
-                "L", shoulder, shaftRadius,
-                "L", shoulder, headRadius,
-                "L", end, 0,
-                "L", shoulder, -headRadius,
-                "L", shoulder, -shaftRadius,
-                "L", start, -shaftRadius,
-                "Z"
-            ].join(" "),
-            apex: {
-                x: start + (shoulder - start) / 2,
-                y: 0
-            }
-        };
+    gd.horizontalArrowOutline = function(predicate, start, end, arrowWidth) {
+        if (predicate == "subtype") {
+            return subtypeOutline(start, end, arrowWidth);
+        } else {
+            return binaryPredicateOutline(start, end, arrowWidth);
+        }
     };
 
     gd.curvedArrowOutline = function(startRadius, endRadius, endCentre, minOffset, arrowWidth, headWidth, headLength)
@@ -1089,11 +1095,11 @@ gd = {};
         };
 
         this.startRelationship = function() {
-            return this.insideRadius + this.borderWidth + this.arrowMargin;
+            return this.insideRadius + this.borderWidth; // + this.arrowMargin; // CRH
         };
 
         this.endRelationship = function() {
-            return this.insideRadius + this.borderWidth + this.arrowMargin;
+            return this.insideRadius + this.borderWidth; // + this.arrowMargin; // CRH
         };
     };
 
@@ -1443,8 +1449,12 @@ gd = {};
 
             captions.enter().append("svg:text")
                 .attr("class", captionClasses)
+                .attr("vertical-align", "middle")
                 .attr("text-anchor", "middle")
-                .attr("alignment-baseline", "central");
+                .attr("alignment-baseline", "central") // central
+                // Firefox compatibility fuckery
+                .attr("dy", "0.3em")
+                .attr("baseline-shift", "0.3em");
 
             captions
                 .attr("x", function ( line ) { return line.node.model.ex(); })
@@ -1459,7 +1469,7 @@ gd = {};
         {
             function translateToStartNodeCenterAndRotateToRelationshipAngle(r) {
                 var angle = r.start.model.angleTo(r.end.model);
-                return "translate(" + r.start.model.ex() + "," + r.start.model.ey() + ") rotate(" + angle + ")";
+                return "translate(" + r.start.model.ex() + "," + r.start.model.ey()+ ") rotate(" + angle + ")";
             }
 
             function rotateIfRightToLeft(r) {
@@ -1524,7 +1534,7 @@ gd = {};
             relationshipType.enter().append("svg:text")
                 .attr("class", "type")
                 .attr("text-anchor", "middle")
-                .attr("baseline-shift", "30%")
+                .attr("dy", "2em") // CRH
                 .attr("alignment-baseline", "alphabetic");
 
             relationshipType
@@ -1534,6 +1544,23 @@ gd = {};
                 .attr( "font-size", function ( d ) { return d.model.style( "font-size" ); } )
                 .attr( "font-family", function ( d ) { return d.model.style( "font-family" ); } )
                 .text( function ( d ) { return d.model.relationshipType(); } );
+
+            function relationshipWithRelationshipPredicate(d) {
+                return [d].filter(function(d) { return d.model.relationshipPredicate(); });
+            }
+
+            var relationshipPredicate = relationshipGroup.selectAll("span.predicate")
+                .data(relationshipWithRelationshipPredicate);
+
+            relationshipPredicate.exit().remove();
+
+            relationshipPredicate.enter().append("span")
+                .attr("class", "predicate")
+                .attr("value", function ( d ) { return d.model.relationshipPredicate(); } ); // function ( d ) { return d.model.relationshipType(); }
+
+            relationshipPath
+                .attr( "predicate", function(d) { return d.model.relationshipPredicate(); } )
+
         }
 
         function renderProperties( entities, descriminator, view )

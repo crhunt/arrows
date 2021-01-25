@@ -1,0 +1,45 @@
+@font-face {
+  font-family: 'Montserrat';
+  src: url(../style/fonts/Montserrat/Montserrat-Regular.ttf)  format('truetype');
+}
+
+.graph-diagram-markup {
+    font-family: "Montserrat", "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+
+.graph-diagram-markup .node {
+    font-size: 14px;
+    color: #1a174c;
+    margin: 5px;
+    padding: 5px;
+    min-width: 50px;
+    background-color: rgba(8, 23, 77, 0.1); /* f7f7f9 */
+    border: 2px solid rgba(8, 23, 77, 0.8); /* 1a174c */
+}
+
+.graph-diagram-markup .relationship {
+    font-size: 14px;
+    color: #1a174c;
+    width: 2px;
+    margin: 10px;
+    background-color: rgba(8, 23, 77, 0.8);
+    border: none;
+}
+
+/*
+.graph-diagram-markup .relationship [predicate="subtype"] {
+    font-size: 14px;
+    color: #1a174c;
+    width: 2px;
+    margin: 10px;
+    background-color: rgba(241, 127, 100, 0.8); /*f17f64*/
+    /*border: none;
+}*/
+
+.graph-diagram-markup .properties {
+    font-size: 14px;
+    margin: 12px;
+    padding: 4px;
+    background-color: white;
+    border: 1px solid rgba(0, 0, 0, 0.5);
+}

@@ -232,16 +232,16 @@
         ].join( " " );
       } );
 
-    svg
-        .selectAll( "circle.arc" ).data( curves ).enter()
-        .append( "circle" )
-        .attr("class", "arc")
-        .attr("stroke", "red")
-        .attr("stroke-width", 1)
-        .attr("fill", "none")
-        .attr("cx", function(curve) { return curve.cx; })
-        .attr("cy", function(curve) { return curve.cy; })
-        .attr("r", function(curve) { return curve.arcRadius; });
+  svg
+      .selectAll( "circle.arc" ).data( curves ).enter()
+      .append( "circle" )
+      .attr("class", "arc")
+      .attr("stroke", "red")
+      .attr("stroke-width", 1)
+      .attr("fill", "none")
+      .attr("cx", function(curve) { return curve.cx; })
+      .attr("cy", function(curve) { return curve.cy; })
+      .attr("r", function(curve) { return curve.arcRadius; });
 
   svg
       .append( "path" )
@@ -252,6 +252,7 @@
         "M", start.x + start.r + padding, start.y,
         "L", end.x - end.r - padding, end.y
       ].join( " " ) );
+
 </script>
 
 </body>

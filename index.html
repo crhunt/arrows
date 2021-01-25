@@ -2,49 +2,122 @@
 <html>
 <head>
   <script type="text/javascript" src="lib/d3.v3.js" charset="UTF-8"></script>
+  <script type="text/javascript" src="lib/d3-context-menu.js" charset="UTF-8"></script>
   <script type="text/javascript" src="graph-diagram.js"></script>
+  <script type="text/javascript" src="graph-orm.js"></script>
+  <script type="text/javascript" src="lib/dropdown.js" charset="UTF-8"></script>
+  <script type="text/javascript" src="lib/slidebars.js" charset="UTF-8"></script>
+  <script type="text/javascript" src="lib/clientSideInclude.js" charset="UTF-8"></script>
+  <script type="text/javascript" src="graph-editor.js"></script>
+  <script type="text/javascript" src="cypher.js"></script>
+  <script type="text/javascript" src="delve.js"></script>
 
   <link rel="stylesheet" href="lib/bootstrap.css" type="text/css">
   <link rel="stylesheet" href="style/graph-diagram.css" type="text/css">
-  <link rel="stylesheet" class="graph-style" href="style/graph-style-chunky.css" type="text/css">
+  <link rel="stylesheet" href="style/d3-context-menu.css"  type="text/css" />
+  <link rel="stylesheet" class="graph-style" href="style/graph-style-rai.css" type="text/css">
   <link rel="stylesheet" href="style/graph-editor.css" type="text/css">
-  <script type="text/javascript" src="graph-editor.js"></script>
-  <script type="text/javascript" src="cypher.js"></script>
-  <title>Arrow Tool</title>
+  <link rel="stylesheet" href="style/style-rai.css" type="text/css">
 
-  <script type="text/javascript">
+  <title>Visualize relAI</title>
 
-    var _gaq = _gaq || [];
-    _gaq.push( ['_setAccount', 'UA-9292365-1'] );
-    _gaq.push( ['_trackPageview'] );
-
-    (function ()
-    {
-      var ga = document.createElement( 'script' );
-      ga.type = 'text/javascript';
-      ga.async = true;
-      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
-      var s = document.getElementsByTagName( 'script' )[0];
-      s.parentNode.insertBefore( ga, s );
-    })();
-
-  </script>
 </head>
 <body>
 
-<div class="tools form-inline well">
-  <button class="btn" id="add_node_button"><i class="icon-plus"></i> Node</button>
-  <button class="btn" id="exportToArrowsAppButton">Try Arrows.app <span class="label label-success">New!</span></button>
-  <button class="btn" id="exportCypherButton">Export Cypher</button>
-  <button class="btn" id="exportMarkupButton">Export Markup</button>
-  <a class="btn" id="downloadSvgButton" download="arrows.svg">Download SVG</a>
-  <button class="btn" id="chooseStyleButton">Choose Style</button>
-  <label for="internalScale">Internal Scale</label>
-  <input id="internalScale" type="range" min="0.1" max="5" value="1" step="0.01">
+<!-- Delve sidebar -->
+<div id="sideDelve" class="sidenav">
+    <div id="openSideNav" class="sidenav open" onclick="openSideNav()">
+      <p>DELVE</p><div class="chevron-box"><span class="chevrons-down"></span></div>
+    </div>
+    <div class="sidenav main" id="sideDelveMain">
+      <div class="closebtn"><a href="javascript:void(0)" onclick="closeSideNav()">&times;</a></div>
+      <p class="header" onclick="closeSideNav()">DELVE &rang;&rang;&rang;</p>
+      <textarea class="code"></textarea>
+      <a href="#">Download</a>
+    </div>
 </div>
 
-<!--<input id="node_name_editor" class="editor-field">-->
+<!-- ORM bottom bar -->
+<div id="bottomORM" class="bottomnav">
+    <div id="openBottomNav" class="open">
+      <div onclick="openBottomNav()" id="bottomNavUp">
+        <div class="chevron-box"><span class="chevrons-up"></span></div>
+        <div class="header">ORM Cheat Sheet</div>
+      </div>
+      <div onclick="closeBottomNav()" id="bottomNavDown">
+        <div class="chevron-box"><span class="chevrons-down"></span></div>
+        <div class="header">ORM Cheat Sheet</div>
+        <!--a href="javascript:void(0)" class="closebtn" onclick="closeBottomNav()">&times;</a-->
+      </div>
+    </div>
+    <div class="bottomnav main" id="bottomORMMain">
+      <div id="ORM_guide"></div>
+      <iframe id="ORMframe" src="ORMguide.html" class="ormframebox" href="ORMguide.html">
+      </iframe>
+    </div>
+</div>
 
+<!-- bgmain sets the background-->
+<div class="bgmain" id="main" onclick="closeAllNavs()">
+
+<!--logo-->
+<div class="logobar">
+    <div class="logo"></div>
+</div>
+
+<!--top menu-->
+<div class="topbar">
+<div class="menu">
+    <ul>
+    <li><h3><a id="add_node_button">+ Entity</a></h3>
+    </li>
+    <li><h3>
+        <a href="#"
+        onmouseover="mopen('Export')"
+        onmouseout="mclosetime()">Export</a></h3>
+        <div id="Export"
+            onmouseover="mcancelclosetime()"
+            onmouseout="mclosetime()">
+            <a id="exportDelveButton">Export Delve</a>
+            <a id="exportMarkupButton">Export Markup</a>
+            <a id="downloadSvgButton" download="arrows.svg">Download SVG</a>
+        </div>
+    </li>
+    <li><h3>
+        <a href="#"
+        onmouseover="mopen('Style')"
+        onmouseout="mclosetime()">Style</a></h3>
+        <div id="Style"
+            onmouseover="mcancelclosetime()"
+            onmouseout="mclosetime()">
+            <label class="custom-radio block-style">
+              <input type="radio" name="styleChoice" value="graph-style-rai.css" checked>
+              <span class="menu-item">relationalAI</span>
+            </label>
+            <label class="custom-radio block-style">
+              <input type="radio" name="styleChoice" value="graph-style-chunky.css">
+              <span class="menu-item">Chunky</span>
+            </label>
+            <label class="custom-radio block-style">
+              <input type="radio" name="styleChoice" value="graph-style-bootstrap.css">
+              <span class="menu-item">Bootstrap</span>
+            </label>
+        </div>
+    </li>
+    <li class="no-background"><span class="slider">
+        <span class="slider-cell"><label for="internalScale">Internal Scale</label></span>
+        <span class="slider-cell"><input id="internalScale" type="range" min="0.1" max="5" value="1" step="0.01"></span>
+    </span></li>
+    </ul>
+</div>
+
+<!--Delve slide out field-->
+<!--span id="openSideNav" style="font-size:30px;cursor:pointer" onclick="openSideNav()">&#9776; open</span-->
+
+</div>
+
+
+<!-- Markup export pop-up-->
 <div class="modal hide export-markup">
   <div class="modal-header">
     <h3>Edit/Export markup</h3>
@@ -57,28 +130,12 @@
     <a href="#" class="btn btn-primary" id="save_markup">Save</a>
   </div>
 </div>
-<div class="modal hide choose-style">
-  <div class="modal-header">
-    <h3>Choose Style</h3>
-  </div>
-  <div class="modal-body">
-    <label class="radio">
-      <input type="radio" name="styleChoice" value="graph-style-chunky.css" checked>
-      Chunky
-    </label>
-    <label class="radio">
-      <input type="radio" name="styleChoice" value="graph-style-bootstrap.css">
-      Bootstrap
-    </label>
-  </div>
-  <div class="modal-footer">
-    <a href="#" class="btn cancel">Cancel</a>
-    <a href="#" class="btn btn-primary" id="saveStyle">Save</a>
-  </div>
-</div>
+
+
+<!--Entity editor-->
 <div class="modal hide pop-up-editor node" tabindex="-1">
   <div class="modal-header">
-    <h3>Edit Node</h3>
+    <h3>Edit Entity</h3>
   </div>
   <div class="top-right-btn-bar">
     <button class="btn btn-danger" id="edit_node_delete">Delete</button>
@@ -86,16 +143,18 @@
   <div class="modal-body">
     <div class="form-horizontal">
       <div class="control-group">
-        <label class="control-label" for="node_caption">Caption</label>
+        <label class="control-label" for="node_caption">Name</label>
         <div class="controls">
           <input id="node_caption" type="text" value="A">
         </div>
       </div>
+      <div class="hidden">
       <div class="control-group">
         <label class="control-label" for="node_properties">Properties</label>
         <div class="controls">
           <textarea id="node_properties" rows="6"></textarea>
         </div>
+      </div>
       </div>
     </div>
   </div>
@@ -104,6 +163,8 @@
     <a href="#" class="btn btn-primary" id="edit_node_save">Save</a>
   </div>
 </div>
+
+<!--Relationship editor-->
 <div class="modal hide pop-up-editor relationship" tabindex="-1">
   <div class="modal-header">
     <h3>Edit Relationship</h3>
@@ -115,16 +176,39 @@
   <div class="modal-body">
     <div class="form-horizontal">
       <div class="control-group">
-        <label class="control-label" for="relationship_type">Type</label>
+        <label class="control-label" for="relationship_type">Role Name</label>
         <div class="controls">
           <input id="relationship_type" type="text" value="R">
         </div>
       </div>
       <div class="control-group">
+        <label class="control-label" for="relationship_type">Relation Statement</label>
+        <div class="controls">
+          <div id="relation_statement" class="relation_statement"></div>
+        </div>
+      </div>
+      <div class="control-group">
+        <label class="control-label" for="relationship_predicate">Predicate</label>
+        <div class="controls">
+          <div class="predicate-box">
+            <label class="custom-radio inline-style" for="pred_binary">
+              <input type="radio" name="relationship_predicate" id="pred_binary" value="binary">
+              <span class="predicate"><img src="img/predicates/binary_predicate.png"></span>
+            </label>
+            <label class="custom-radio inline-style" for="pred_subtype">
+              <input type="radio" name="relationship_predicate" id="pred_subtype" value="subtype">
+              <span class="predicate"><img src="img/predicates/subtype_predicate.png"></span>
+            </label>
+          </div>
+        </div>
+      </div>
+      <div class="hidden">
+      <div class="control-group">
         <label class="control-label" for="relationship_properties">Properties</label>
         <div class="controls">
-          <textarea id="relationship_properties" rows="6"></textarea>
+          <textarea id="relationship_properties" rows="3"></textarea>
         </div>
+      </div>
       </div>
     </div>
   </div>
@@ -133,6 +217,7 @@
     <a href="#" class="btn btn-primary" id="edit_relationship_save">Save</a>
   </div>
 </div>
+
 <div class="modal hide export-cypher">
   <div class="modal-header">
     <h3>Export as Cypher</h3>
@@ -146,8 +231,29 @@
   </div>
 </div>
 
+<div class="modal hide export-delve">
+  <div class="modal-header">
+    <h3>Export as Delve</h3>
+  </div>
+  <div class="modal-body">
+    <textarea class="code">Some Text</textarea>
+  </div>
+  <div class="modal-footer">
+    <a href="#" class="btn cancel btn-primary">Close</a>
+    <a href="#" target="_blank" class="btn" id="open_console">Open in Console</a>
+  </div>
+</div>
+
+<!-- About
+
+- Arrows: Alistair Jones https://github.com/apcj/arrows http://www.apcjones.com/arrows/
+- Right click: https://github.com/patorjk/d3-context-menu http://plnkr.co/edit/hAx36JQhb0RsvVn7TomS?p=info&preview
+
+-->
+
 <div id="canvas"></div>
 
+</div><!--end bgmain-->
 
 </body>
 </html>
