@@ -1004,7 +1004,7 @@ gd = {};
             model.roleboxList().forEach(function(rolebox) {
                 var li = ul.append("li")
                     .attr("class", rolebox.class().join(" "))
-                    .attr("data-node-id", rolebox.id)
+                    .attr("data-rolebox-id", rolebox.id)
                     .attr("data-x", rolebox.x())
                     .attr("data-y", rolebox.y());
 
