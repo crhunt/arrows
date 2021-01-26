@@ -327,8 +327,8 @@ gd = {};
             };
 
             this.distance = function() {
-                var dx = node.x() - this.x();
-                var dy = node.y() - this.y();
+                var dx = rolebox.x() - this.x();
+                var dy = rolebox.y() - this.y();
                 return Math.sqrt(dx * dx + dy * dy) * internalScale;
             };
 
@@ -511,7 +511,7 @@ gd = {};
             relationship: new SimpleStyle(),
             relationshipProperties: new SimpleStyle(),
             rolebox: new SimpleStyle(),
-            roleboxProperties: new SimpleStyle(),
+            roleboxProperties: new SimpleStyle()
         };
 
         return model;
@@ -559,7 +559,7 @@ gd = {};
                 radius: measurement.radius,
                 captionLines: measurement.captionLines,
                 captionLineHeight: measurement.captionLineHeight,
-                properties: gd.nodeSpeechBubble( graphModel )( rolebox, measurement.radius ),
+                //properties: gd.nodeSpeechBubble( graphModel )( rolebox, measurement.radius ),
                 model: rolebox
             };
             roleboxesById[rolebox.id] = layoutRolebox;
@@ -1777,10 +1777,10 @@ gd = {};
                 .attr( "predicate", function(d) { return d.model.relationshipPredicate(); } )
 
         }
-
+        
         function renderRoleboxes( roleboxes, view )
         {
-            function nodeClasses(d) {
+            function roleboxClasses(d) {
                 return d.model.class().join(" ") + " " + "rolebox-id-" + d.model.id;
             }
 
@@ -1790,7 +1790,7 @@ gd = {};
             circles.exit().remove();
 
             circles.enter().append("svg:circle")
-                .attr("class", nodeClasses);
+                .attr("class", roleboxClasses);
 
             circles
                 .attr("r", function(rolebox) {

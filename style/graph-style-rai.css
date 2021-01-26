@@ -17,6 +17,16 @@
     border: 2px solid rgba(8, 23, 77, 0.8); /* 1a174c */
 }
 
+.graph-diagram-markup .rolebox {
+    font-size: 14px;
+    color: #1a174c;
+    margin: 5px;
+    padding: 5px;
+    min-width: 50px;
+    background-color: rgba(8, 23, 77, 0.1); /* f7f7f9 */
+    border: 2px solid rgba(8, 23, 77, 0.8); /* 1a174c */
+}
+
 .graph-diagram-markup .relationship {
     font-size: 14px;
     color: #1a174c;

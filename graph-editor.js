@@ -90,6 +90,53 @@ window.onload = function()
                     return "translate(" + r.start.model.ex() + "," + r.start.model.ey() + ") rotate(" + angle + ")";
                 } )
                 .attr("d", function(d) { return d.arrow.outline; } );
+            /*
+            var roleboxOverlays = view.selectAll("circle.rolebox.overlay")
+                .data(layoutModel.roleboxes);
+
+            roleboxOverlays.exit().remove();
+
+            roleboxOverlays.enter().append("circle")
+                .attr("class", "rolebox overlay");
+                //.call( d3.behavior.drag().on( "drag", drag ).on( "dragend", dragEnd ) )
+                //.on('contextmenu', d3.contextMenu(roleboxOptions))
+                //.on( "dblclick", editNode );
+
+            roleboxOverlays
+                .attr("r", function(rolebox) {
+                    return rolebox.radius.outside();
+                })
+                .attr("stroke", "none")
+                .attr("fill", "rgba(255, 255, 255, 0)")
+                .attr("cx", function(rolebox) {
+                    return rolebox.x;
+                })
+                .attr("cy", function(rolebox) {
+                    return rolebox.y;
+                });
+            
+            var roleboxBoxes = view.selectAll("circle.rolebox.ring")
+                .data(layoutModel.roleboxes);
+
+            roleboxBoxes.exit().remove();
+
+            roleboxBoxes.enter().append("circle")
+                .attr("class", "rolebox ring");
+                //.call( d3.behavior.drag().on( "drag", dragRing ).on( "dragend", dragEnd ) );
+
+            roleboxBoxes
+                .attr("r", function(rolebox) {
+                    return rolebox.radius.outside() + 5;
+                })
+                .attr("fill", "none")
+                .attr("stroke", "rgba(255, 255, 255, 0)")
+                .attr("stroke-width", "10px")
+                .attr("cx", function(rolebox) {
+                    return rolebox.x;
+                })
+                .attr("cy", function(rolebox) {
+                    return rolebox.y;
+                });*/
         });
 
     var relOptions =
@@ -135,6 +182,7 @@ window.onload = function()
     }
 
     var newNode = null;
+    //var newRolebox = null;
     var newRelationship = null;
 
     function findClosestOverlappingNode( node )

@@ -42,6 +42,12 @@ function delve(model) {
         statements.push("(" + validate(node.id) +" :" + validate(node.caption() || "Node") + " " + render(props(node)) + ") ");
     });
     */
+
+    // For testing: print roleboxes
+    model.roleboxList().forEach(function (rolebox) {
+        statements.push("(" + validate(rolebox.id) +" :" + validate(rolebox.caption() || "Rolebox") + ") ");
+    });
+
     /*
      * Create code for relationships between entities
      *   relationshipType: relation name
@@ -73,7 +79,7 @@ function delve(model) {
 
     // If there are no Delve statements, return an empty string
     if (statements.length==0) return "";
-    // Join the Cypher statements and return
+    // Join the Delve statements and return
     return statements.join("\n");
 };
 
