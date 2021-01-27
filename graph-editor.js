@@ -1,17 +1,24 @@
 window.onload = function()
 {
     var graphModel;
-    if ( !localStorage.getItem( "graph-diagram-markup" ) )
+
+    graphModel = gd.model();
+    graphModel.createNode().x( 0 ).y( 0 );
+    save( formatMarkup() );
+
+    /*if ( !localStorage.getItem( "graph-diagram-markup" ) )
     {
         graphModel = gd.model();
         graphModel.createNode().x( 0 ).y( 0 );
         save( formatMarkup() );
-    }
+    }*/
+    
     if ( localStorage.getItem( "graph-diagram-style" ) )
     {
         d3.select( "link.graph-style" )
             .attr( "href", localStorage.getItem( "graph-diagram-style" ) );
     }
+    
     graphModel = parseMarkup( localStorage.getItem( "graph-diagram-markup" ) );
 
     var svg = d3.select("#canvas")
@@ -114,14 +121,14 @@ window.onload = function()
                 .attr("cy", function(rolebox) {
                     return rolebox.y;
                 });
-            
+            */
             var roleboxBoxes = view.selectAll("circle.rolebox.ring")
                 .data(layoutModel.roleboxes);
 
             roleboxBoxes.exit().remove();
 
             roleboxBoxes.enter().append("circle")
-                .attr("class", "rolebox ring");
+                .attr("class", "rolebox ring")
                 //.call( d3.behavior.drag().on( "drag", dragRing ).on( "dragend", dragEnd ) );
 
             roleboxBoxes
@@ -136,7 +143,7 @@ window.onload = function()
                 })
                 .attr("cy", function(rolebox) {
                     return rolebox.y;
-                });*/
+                });
         });
 
     var relOptions =
@@ -253,6 +260,15 @@ window.onload = function()
         diagram.scaling(gd.scaling.centerOrScaleDiagramToFitSvgSmooth);
         draw();
     }
+
+    d3.select( "#refresh" ).on( "click", function ()
+    {
+        graphModel = gd.model();
+        graphModel.createNode().x( 0 ).y( 0 );
+        save( formatMarkup() );
+        graphModel = parseMarkup( localStorage.getItem( "graph-diagram-markup" ) );
+        draw();
+    } );
 
     d3.select( "#add_node_button" ).on( "click", function ()
     {
@@ -425,7 +441,7 @@ window.onload = function()
 
     function formatMarkup()
     {
-        var container = d3.select( "body" ).append( "div" );
+        var container = d3.select( ".bgmain" ).append( "div" );
         gd.markup.format( graphModel, container );
         var markup = container.node().innerHTML;
         markup = markup
@@ -549,10 +565,10 @@ window.onload = function()
             .attr("href", "style/" + selectedStyle);
         graphModel = parseMarkup( localStorage.getItem( "graph-diagram-markup" ) );
 
-        //save(formatMarkup());
-        //draw();
-        let wait = async function() { save(formatMarkup()) };
-        wait().then(draw());
+        save(formatMarkup());
+        draw();
+        //let wait = async function() { save(formatMarkup()) };
+        //wait().then(draw());
 
     });
 
