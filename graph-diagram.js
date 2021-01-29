@@ -183,6 +183,7 @@ gd = {};
             var relationshipType;
             var relationshipPredicate;
             var classes = [];
+            var attachedRoleboxes = [];
             var properties = new Properties(model.stylePrototype.relationshipProperties);
 
             this.class = function(classesString) {
@@ -193,6 +194,24 @@ gd = {};
                     return this;
                 }
                 return ["relationship"].concat(classes);
+            };
+
+            this.attachedRoleboxes = function(roleboxlist) {
+                if (arguments.length == 1) {
+                    attachedRoleboxes = roleboxlist;
+                    return this;
+                }
+                return attachedRoleboxes;
+            };
+
+            this.addRolebox = function(rolebox) {
+                attachedRoleboxes[rolebox.id] = rolebox;
+                return attachedRoleboxes;
+            };
+
+            this.detachRolebox = function(rolebox) {
+                delete attachedRoleboxes[rolebox.id];
+                return attachedRoleboxes;
             };
 
             this.relationshipType = function(relationshipTypeText) {
@@ -426,6 +445,15 @@ gd = {};
 
         model.createRelationship = function(start, end) {
             var relationship = new Relationship(start, end);
+            // Create roleboxes for relationship: This will be changed to reflect predicate type
+            var roleboxId = generateRoleboxId();
+            var rolebox = new Rolebox();
+            rolebox.id = roleboxId;
+            //rolebox.y = relationship.start.y - relationship.end.y;
+            //rolebox.x = relationship.start.x - relationship.end.x;
+            roleboxes[roleboxId] = rolebox;
+            relationship.addRolebox(rolebox);
+            // End rolebox
             relationships.push(relationship);
             return relationship;
         };

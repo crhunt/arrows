@@ -57,9 +57,10 @@ function delve(model) {
     model.relationshipList().forEach(function (rel) {
         var entity1 = validate(rel.start.caption() || "Entity"+rel.start.id);
         var entity2 = validate(rel.end.caption() || "Entity"+rel.end.id);
+        var predicate = "relationship";
         if (rel.relationshipPredicate() == "binary") {
             // Binary predicate
-            var predicate = validate(rel.relationshipType() || "is_related_to"); // Default relation name is "related_to"
+            predicate = validate(rel.relationshipType() || "is_related_to"); // Default relation name is "related_to"
             statements.push("// "+ entity1 + " " + predicate + " " + entity2 + ".\n" +
                 "def "+ predicate + "(v" + validate(rel.start.id) + ", v" + validate(rel.end.id) +") =\n" +
                 "    " + entity1 + "(v" + validate(rel.start.id) + ")" +
@@ -67,7 +68,7 @@ function delve(model) {
             );
         } else if (rel.relationshipPredicate() == "subtype") {
             // Subtype predicate
-            var predicate = validate(rel.relationshipType() || "is_subtype_of"); // Default relation name is "subtype_of"
+            predicate = validate(rel.relationshipType() || "is_subtype_of"); // Default relation name is "subtype_of"
             statements.push( "// "+ entity1 + " " + predicate + " " + entity2 + ".\n" +
                 "ic "+ predicate + "(v" + validate(rel.start.id) +") =\n" +
                 "    " + validate(rel.start.caption() || "Entity"+rel.start.id) + "(v" + validate(rel.start.id) + ")" +
@@ -75,6 +76,10 @@ function delve(model) {
                 + validate(rel.end.caption() || "Entity"+rel.end.id) + "(v" + validate(rel.start.id) + ")\n"
             );
         }
+        rel.attachedRoleboxes().forEach( function(rbox) {
+            // For testing: relationships with associated roleboxes:
+            statements.push(predicate + " : (" + validate(rbox.id) +" :" + validate(rbox.caption() || "Rolebox") + ") ");
+        });
     });
 
     // If there are no Delve statements, return an empty string
