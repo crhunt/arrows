@@ -198,7 +198,7 @@ gd = {};
 
         var Relationship = function(start, end) {
             var relationshipType;
-            var relationshipPredicate;
+            var relationshipPredicate = "binary";
             var classes = [];
             var attachedRoleboxes = [];
             var properties = new Properties(model.stylePrototype.relationshipProperties);
