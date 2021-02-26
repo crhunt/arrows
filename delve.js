@@ -36,12 +36,14 @@ function delve(model) {
     // All statements in the Delve code
     var statements = [];
 
-    // Create code for entities
-    /*
+    // Declare entities
+    statements.push("// Entity definitions")
     model.nodeList().forEach(function (node) {
-        statements.push("(" + validate(node.id) +" :" + validate(node.caption() || "Node") + " " + render(props(node)) + ") ");
+        var entityname = validate(node.caption() || "Entity"+node.id);
+        statements.push( "entity " + entityname + " as_" + entityname.toLowerCase() + " = "  + validate(node.id) ); //+ render(props(node)) + ") ");
     });
-    */
+    statements.push("\n")
+    
 
     // For testing: print roleboxes
     model.roleboxList().forEach(function (rolebox) {

@@ -57,7 +57,7 @@ gd = {};
             var position = {};
             var prototypePosition;
             var caption;
-            var isRB = false;
+            var rtype = "entity";
             var classes = [];
             var properties = new Properties(model.stylePrototype.nodeProperties);
 
@@ -71,12 +71,16 @@ gd = {};
                 return ["node"].concat(classes);
             };
 
-            this.isRB = function(truth) {
+            this.rtype = function(typeText) {
                 if (arguments.length == 1) {
-                    isRB = truth;
+                    if (rtype.length > 0) {
+                        rtype = typeText;
+                    } else {
+                        rtype = "entity";
+                    }
                     return this;
                 }
-                return isRB;
+                return rtype;
             };
 
             this.x = function(x) {
@@ -184,8 +188,12 @@ gd = {};
             this.properties = function() {
                 return properties;
             };
+            
+            /*this.style = function() {
+                return styleSet(model.stylePrototype.node);
+            };*/
 
-            this.style = styleSet(model.stylePrototype.node);
+            this.style = styleSet(model.stylePrototype.redhot);
         };
 
         var Relationship = function(start, end) {
@@ -455,13 +463,11 @@ gd = {};
         model.createRelationship = function(start, end) {
             var relationship = new Relationship(start, end);
             // Create roleboxes for relationship: This will be changed to reflect predicate type
-            var roleboxId = generateRoleboxId();
-            var rolebox = new Rolebox();
-            rolebox.id = roleboxId;
-            //rolebox.y = relationship.start.y - relationship.end.y;
-            //rolebox.x = relationship.start.x - relationship.end.x;
-            roleboxes[roleboxId] = rolebox;
-            relationship.addRolebox(rolebox);
+            //var roleboxId = generateRoleboxId();
+            //var rolebox = new Rolebox();
+            //rolebox.id = roleboxId;
+            //roleboxes[roleboxId] = rolebox;
+            //relationship.addRolebox(rolebox);
             // End rolebox
             relationships.push(relationship);
             return relationship;
@@ -545,6 +551,7 @@ gd = {};
         model.stylePrototype = {
             node: new SimpleStyle(),
             nodeProperties: new SimpleStyle(),
+            redhot: new SimpleStyle(),
             relationship: new SimpleStyle(),
             relationshipProperties: new SimpleStyle(),
             rolebox: new SimpleStyle(),
@@ -575,6 +582,7 @@ gd = {};
                 class: node.class,
                 x: node.ex(),
                 y: node.ey(),
+                rtype: node.rtype,
                 radius: measurement.radius,
                 captionLines: measurement.captionLines,
                 captionLineHeight: measurement.captionLineHeight,
@@ -895,7 +903,8 @@ gd = {};
 
             var nodePrototype = selection.append("li" ).attr("class", "node");
             var nodePropertiesPrototype = nodePrototype.append("dl" ).attr("class", "properties");
-            copyStyles(model.stylePrototype.node, nodePrototype);
+            //copyStyles(model.stylePrototype.node, nodePrototype);
+            copyStyles(model.stylePrototype.redhot, nodePrototype);
             copyStyles(model.stylePrototype.nodeProperties, nodePropertiesPrototype);
             nodePrototype.remove();
 
@@ -938,6 +947,7 @@ gd = {};
                 var id = nodeMarkup.attr("data-node-id");
                 var node = model.createNode(id);
                 node.class(nodeMarkup.attr("class") || "");
+                node.rtype(nodeMarkup.attr("rtype") || "");
                 node.x(nodeMarkup.attr("data-x"));
                 node.y(nodeMarkup.attr("data-y"));
                 nodeMarkup.select("span.caption").each(function() {
@@ -1010,6 +1020,7 @@ gd = {};
                 var li = ul.append("li")
                     .attr("class", node.class().join(" "))
                     .attr("data-node-id", node.id)
+                    .attr("rtype", node.rtype())
                     .attr("data-x", node.x())
                     .attr("data-y", node.y());
 
