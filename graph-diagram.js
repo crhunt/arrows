@@ -57,6 +57,7 @@ gd = {};
             var position = {};
             var prototypePosition;
             var caption;
+            var isRB = false;
             var classes = [];
             var properties = new Properties(model.stylePrototype.nodeProperties);
 
@@ -68,6 +69,14 @@ gd = {};
                     return this;
                 }
                 return ["node"].concat(classes);
+            };
+
+            this.isRB = function(truth) {
+                if (arguments.length == 1) {
+                    isRB = truth;
+                    return this;
+                }
+                return isRB;
             };
 
             this.x = function(x) {
