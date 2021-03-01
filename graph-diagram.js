@@ -391,6 +391,7 @@ gd = {};
             };
 
             this.style = styleSet(model.stylePrototype.rolebox);
+            //this.style = styleSet(stylePrototype);
         };
 
         var Properties = function(stylePrototype) {
@@ -1826,7 +1827,7 @@ gd = {};
 
         }
         
-        function renderRoleboxes( roleboxes, view )
+        function renderRoleboxes_orig( roleboxes, view )
         {
             function roleboxClasses(d) {
                 return d.model.class().join(" ") + " " + "rolebox-id-" + d.model.id;
@@ -1855,6 +1856,87 @@ gd = {};
                 })
                 .attr("cx", field("x"))
                 .attr("cy", field("y"));
+
+            function captionClasses(d) {
+                return "caption " + d.rolebox.model.class();
+            }
+
+            var captionGroups = view.selectAll("g.caption")
+                .data(roleboxes.filter(function(rolebox) { return rolebox.model.caption(); }));
+
+            captionGroups.exit().remove();
+
+            captionGroups.enter().append("g")
+                .attr("class", "caption");
+
+            var captions = captionGroups.selectAll("text.caption")
+                .data( function ( rolebox )
+                {
+                    return rolebox.captionLines.map( function ( line )
+                    {
+                        return { rolebox: rolebox, caption: line }
+                    } );
+                } );
+
+            captions.exit().remove();
+
+            captions.enter().append("svg:text")
+                .attr("class", captionClasses)
+                .attr("vertical-align", "middle")
+                .attr("text-anchor", "middle")
+                .attr("alignment-baseline", "central") // central
+                // Firefox compatibility fuckery
+                .attr("dy", "0.3em")
+                .attr("baseline-shift", "0.3em");
+
+            captions
+                .attr("x", function ( line ) { return line.node.model.ex(); })
+                .attr("y", function ( line, i ) { return line.node.model.ey() + (i - (line.node.captionLines.length - 1) / 2) * line.node.captionLineHeight; })
+                .attr( "fill", function ( line ) { return line.node.model.style( "color" ); } )
+                .attr( "font-size", function ( line ) { return line.node.model.style( "font-size" ); } )
+                .attr( "font-family", function ( line ) { return line.node.model.style( "font-family" ); } )
+                .text(function(d) { return d.caption; });
+        }
+
+        function renderRoleboxes( roleboxes, view )
+        {
+            function roleboxClasses(d) {
+                return d.model.class().join(" ") + " " + "rolebox-id-" + d.model.id;
+            }
+
+            var boxes = view.selectAll("circle.rolebox")
+                .data(roleboxes);
+
+            boxes.exit().remove();
+
+            boxes.enter().append("svg:rect")
+                .attr("class", roleboxClasses);
+
+            boxes
+                .attr( "transform", function ( rolebox )
+                {
+                    return rolebox.radius.mid();
+                } )
+                .attr( "width", function ( rolebox )
+                {
+                    return 2* rolebox.radius.mid();
+                } )
+                .attr( "height", function ( rolebox )
+                {
+                    return 0.66 * rolebox.radius.mid();
+                } )
+                .attr( "fill", function ( rolebox )
+                {
+                    return rolebox.model.style("background-color");
+                } )
+                .attr( "stroke", function ( rolebox )
+                {
+                    return rolebox.model.style("border-color");
+                } )
+                .attr( "stroke-width", function ( rolebox )
+                {
+                    return rolebox.model.style("border-width");
+                } );
 
             function captionClasses(d) {
                 return "caption " + d.rolebox.model.class();
