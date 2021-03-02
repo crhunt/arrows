@@ -57,7 +57,6 @@ gd = {};
             var position = {};
             var prototypePosition;
             var caption;
-            var rtype = "entity";
             var classes = [];
             var properties = new Properties(model.stylePrototype.nodeProperties);
 
@@ -69,18 +68,6 @@ gd = {};
                     return this;
                 }
                 return ["node"].concat(classes);
-            };
-
-            this.rtype = function(typeText) {
-                if (arguments.length == 1) {
-                    if (rtype.length > 0) {
-                        rtype = typeText;
-                    } else {
-                        rtype = "entity";
-                    }
-                    return this;
-                }
-                return rtype;
             };
 
             this.x = function(x) {
@@ -583,7 +570,6 @@ gd = {};
                 class: node.class,
                 x: node.ex(),
                 y: node.ey(),
-                rtype: node.rtype,
                 radius: measurement.radius,
                 captionLines: measurement.captionLines,
                 captionLineHeight: measurement.captionLineHeight,
@@ -948,7 +934,6 @@ gd = {};
                 var id = nodeMarkup.attr("data-node-id");
                 var node = model.createNode(id);
                 node.class(nodeMarkup.attr("class") || "");
-                node.rtype(nodeMarkup.attr("rtype") || "");
                 node.x(nodeMarkup.attr("data-x"));
                 node.y(nodeMarkup.attr("data-y"));
                 nodeMarkup.select("span.caption").each(function() {
@@ -1021,7 +1006,6 @@ gd = {};
                 var li = ul.append("li")
                     .attr("class", node.class().join(" "))
                     .attr("data-node-id", node.id)
-                    .attr("rtype", node.rtype())
                     .attr("data-x", node.x())
                     .attr("data-y", node.y());
 
