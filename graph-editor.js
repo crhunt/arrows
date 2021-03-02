@@ -28,6 +28,9 @@ window.onload = function()
     var diagram = gd.diagram()
         .scaling(gd.scaling.centerOrScaleDiagramToFitSvg)
         .overlay(function(layoutModel, view) {
+
+            // Entities
+
             var nodeOverlays = view.selectAll("circle.node.overlay")
                 .data(layoutModel.nodes);
 
@@ -74,6 +77,8 @@ window.onload = function()
                 .attr("cy", function(node) {
                     return node.y;
                 });
+            
+            // Relationships
 
             var relationshipsOverlays = view.selectAll("path.relationship.overlay")
                 .data(layoutModel.relationships);
@@ -97,53 +102,62 @@ window.onload = function()
                     return "translate(" + r.start.model.ex() + "," + r.start.model.ey() + ") rotate(" + angle + ")";
                 } )
                 .attr("d", function(d) { return d.arrow.outline; } );
-            /*
-            var roleboxOverlays = view.selectAll("circle.rolebox.overlay")
+            
+            // Roleboxes
+            
+            var roleboxOverlays = view.selectAll("rect.rolebox.overlay")
                 .data(layoutModel.roleboxes);
 
             roleboxOverlays.exit().remove();
 
-            roleboxOverlays.enter().append("circle")
-                .attr("class", "rolebox overlay");
-                //.call( d3.behavior.drag().on( "drag", drag ).on( "dragend", dragEnd ) )
-                //.on('contextmenu', d3.contextMenu(roleboxOptions))
+            roleboxOverlays.enter().append("rect")
+                .attr("class", "rolebox overlay")
+                .call( d3.behavior.drag().on( "drag", drag ).on( "dragend", dragRoleboxEnd ) );
+                //.on('contextmenu', d3.contextMenu(nodeOptions))
                 //.on( "dblclick", editNode );
 
             roleboxOverlays
-                .attr("r", function(rolebox) {
-                    return rolebox.radius.outside();
+                .attr("height", function(rolebox) {
+                    return 0.5 * rolebox.radius.outside();
+                })
+                .attr("width", function(rolebox) {
+                    return 2 * rolebox.radius.outside();
                 })
                 .attr("stroke", "none")
                 .attr("fill", "rgba(255, 255, 255, 0)")
-                .attr("cx", function(rolebox) {
+                .attr("x", function(rolebox) {
                     return rolebox.x;
                 })
-                .attr("cy", function(rolebox) {
+                .attr("y", function(rolebox) {
                     return rolebox.y;
                 });
-            */
-            var roleboxBoxes = view.selectAll("circle.rolebox.ring")
+
+            var roleboxRings = view.selectAll("rect.rolebox.ring")
                 .data(layoutModel.roleboxes);
 
-            roleboxBoxes.exit().remove();
+            roleboxRings.exit().remove();
 
-            roleboxBoxes.enter().append("circle")
-                .attr("class", "rolebox ring")
+            roleboxRings.enter().append("rect")
+                .attr("class", "rolebox ring");
                 //.call( d3.behavior.drag().on( "drag", dragRing ).on( "dragend", dragEnd ) );
 
-            roleboxBoxes
-                .attr("r", function(rolebox) {
-                    return rolebox.radius.outside() + 5;
+            roleboxRings
+                .attr("height", function(rolebox) {
+                    return 0.5 * rolebox.radius.outside() + 5;
+                })
+                .attr("width", function(rolebox) {
+                    return 2 * rolebox.radius.outside() + 5;
                 })
                 .attr("fill", "none")
                 .attr("stroke", "rgba(255, 255, 255, 0)")
                 .attr("stroke-width", "10px")
-                .attr("cx", function(rolebox) {
+                .attr("x", function(rolebox) {
                     return rolebox.x;
                 })
-                .attr("cy", function(rolebox) {
+                .attr("y", function(rolebox) {
                     return rolebox.y;
                 });
+            
         });
 
     var relOptions =
@@ -189,7 +203,7 @@ window.onload = function()
     }
 
     var newNode = null;
-    //var newRolebox = null;
+    var newRolebox = null;
     var newRelationship = null;
 
     function findClosestOverlappingNode( node )
@@ -256,6 +270,22 @@ window.onload = function()
             }
         }
         newNode = null;
+        save( formatMarkup() );
+        diagram.scaling(gd.scaling.centerOrScaleDiagramToFitSvgSmooth);
+        draw();
+    }
+
+    function dragRoleboxEnd()
+    {
+        if ( newRolebox )
+        {
+            newRolebox.dragRoleboxEnd();
+            if ( newRelationship && newRelationship.end !== newRolebox )
+            {
+                graphModel.deleteNode( newRolebox );
+            }
+        }
+        newRolebox = null;
         save( formatMarkup() );
         diagram.scaling(gd.scaling.centerOrScaleDiagramToFitSvgSmooth);
         draw();

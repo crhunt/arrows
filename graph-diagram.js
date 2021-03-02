@@ -148,7 +148,7 @@ gd = {};
                 prototypePosition = undefined;
             };
 
-            this.distance = function() {
+            this.distance = function(node) {
                 var dx = node.x() - this.x();
                 var dy = node.y() - this.y();
                 return Math.sqrt(dx * dx + dy * dy) * internalScale;
@@ -180,7 +180,7 @@ gd = {};
                 return styleSet(model.stylePrototype.node);
             };*/
 
-            this.style = styleSet(model.stylePrototype.redhot);
+            this.style = styleSet(model.stylePrototype.node);
         };
 
         var Relationship = function(start, end) {
@@ -349,7 +349,7 @@ gd = {};
                 prototypePosition = undefined;
             };
 
-            this.distance = function() {
+            this.distance = function(rolebox) {
                 var dx = rolebox.x() - this.x();
                 var dy = rolebox.y() - this.y();
                 return Math.sqrt(dx * dx + dy * dy) * internalScale;
@@ -378,7 +378,6 @@ gd = {};
             };
 
             this.style = styleSet(model.stylePrototype.rolebox);
-            //this.style = styleSet(stylePrototype);
         };
 
         var Properties = function(stylePrototype) {
@@ -539,7 +538,6 @@ gd = {};
         model.stylePrototype = {
             node: new SimpleStyle(),
             nodeProperties: new SimpleStyle(),
-            redhot: new SimpleStyle(),
             relationship: new SimpleStyle(),
             relationshipProperties: new SimpleStyle(),
             rolebox: new SimpleStyle(),
@@ -589,6 +587,8 @@ gd = {};
                 x: rolebox.ex(),
                 y: rolebox.ey(),
                 radius: measurement.radius,
+                height: 0.25 * measurement.radius,
+                width: 2 * measurement.radius,
                 captionLines: measurement.captionLines,
                 captionLineHeight: measurement.captionLineHeight,
                 //properties: gd.nodeSpeechBubble( graphModel )( rolebox, measurement.radius ),
@@ -700,6 +700,7 @@ gd = {};
             }
 
             var bounds = scaling.boxUnion( layoutModel.nodes.map( scaling.nodeBox )
+                .concat( layoutModel.roleboxes.map( scaling.nodeBox ) )
                 .concat( layoutModel.nodes.filter(gd.hasProperties ).map( boundingBox )
                     .map( scaling.boxNormalise ) )
                 .concat( layoutModel.relationships.filter(gd.hasProperties ).map( boundingBox )
@@ -890,8 +891,7 @@ gd = {};
 
             var nodePrototype = selection.append("li" ).attr("class", "node");
             var nodePropertiesPrototype = nodePrototype.append("dl" ).attr("class", "properties");
-            //copyStyles(model.stylePrototype.node, nodePrototype);
-            copyStyles(model.stylePrototype.redhot, nodePrototype);
+            copyStyles(model.stylePrototype.node, nodePrototype);
             copyStyles(model.stylePrototype.nodeProperties, nodePropertiesPrototype);
             nodePrototype.remove();
 
@@ -971,7 +971,7 @@ gd = {};
                 roleboxMarkup.select("span.caption").each(function() {
                     rolebox.caption(d3.select(this).text());
                 });
-                roleboxMarkup.select( "dl.properties" ).each( parseProperties( rolebox ) );
+                //roleboxMarkup.select( "dl.properties" ).each( parseProperties( rolebox ) );
 
                 copyStyles(rolebox, roleboxMarkup);
             });
@@ -1046,7 +1046,7 @@ gd = {};
                         .attr("class", "caption")
                         .text(rolebox.caption());
                 }
-                formatProperties( rolebox, li );
+                //formatProperties( rolebox, li );
             });
         };
 
@@ -1810,77 +1810,6 @@ gd = {};
                 .attr( "predicate", function(d) { return d.model.relationshipPredicate(); } )
 
         }
-        
-        function renderRoleboxes_orig( roleboxes, view )
-        {
-            function roleboxClasses(d) {
-                return d.model.class().join(" ") + " " + "rolebox-id-" + d.model.id;
-            }
-
-            var circles = view.selectAll("circle.rolebox")
-                .data(roleboxes);
-
-            circles.exit().remove();
-
-            circles.enter().append("svg:circle")
-                .attr("class", roleboxClasses);
-
-            circles
-                .attr("r", function(rolebox) {
-                    return rolebox.radius.mid();
-                })
-                .attr("fill", function(rolebox) {
-                    return rolebox.model.style("background-color");
-                })
-                .attr("stroke", function(rolebox) {
-                    return rolebox.model.style("border-color");
-                })
-                .attr("stroke-width", function(rolebox) {
-                    return rolebox.model.style("border-width");
-                })
-                .attr("cx", field("x"))
-                .attr("cy", field("y"));
-
-            function captionClasses(d) {
-                return "caption " + d.rolebox.model.class();
-            }
-
-            var captionGroups = view.selectAll("g.caption")
-                .data(roleboxes.filter(function(rolebox) { return rolebox.model.caption(); }));
-
-            captionGroups.exit().remove();
-
-            captionGroups.enter().append("g")
-                .attr("class", "caption");
-
-            var captions = captionGroups.selectAll("text.caption")
-                .data( function ( rolebox )
-                {
-                    return rolebox.captionLines.map( function ( line )
-                    {
-                        return { rolebox: rolebox, caption: line }
-                    } );
-                } );
-
-            captions.exit().remove();
-
-            captions.enter().append("svg:text")
-                .attr("class", captionClasses)
-                .attr("vertical-align", "middle")
-                .attr("text-anchor", "middle")
-                .attr("alignment-baseline", "central") // central
-                // Firefox compatibility fuckery
-                .attr("dy", "0.3em")
-                .attr("baseline-shift", "0.3em");
-
-            captions
-                .attr("x", function ( line ) { return line.node.model.ex(); })
-                .attr("y", function ( line, i ) { return line.node.model.ey() + (i - (line.node.captionLines.length - 1) / 2) * line.node.captionLineHeight; })
-                .attr( "fill", function ( line ) { return line.node.model.style( "color" ); } )
-                .attr( "font-size", function ( line ) { return line.node.model.style( "font-size" ); } )
-                .attr( "font-family", function ( line ) { return line.node.model.style( "font-family" ); } )
-                .text(function(d) { return d.caption; });
-        }
 
         function renderRoleboxes( roleboxes, view )
         {
@@ -1888,7 +1817,7 @@ gd = {};
                 return d.model.class().join(" ") + " " + "rolebox-id-" + d.model.id;
             }
 
-            var boxes = view.selectAll("circle.rolebox")
+            var boxes = view.selectAll("rect.rolebox")
                 .data(roleboxes);
 
             boxes.exit().remove();
@@ -1897,17 +1826,13 @@ gd = {};
                 .attr("class", roleboxClasses);
 
             boxes
-                .attr( "transform", function ( rolebox )
-                {
-                    return rolebox.radius.mid();
-                } )
                 .attr( "width", function ( rolebox )
                 {
-                    return 2* rolebox.radius.mid();
+                    return 2 * rolebox.radius.mid();
                 } )
                 .attr( "height", function ( rolebox )
                 {
-                    return 0.66 * rolebox.radius.mid();
+                    return 0.5 * rolebox.radius.mid();
                 } )
                 .attr( "fill", function ( rolebox )
                 {
@@ -1920,7 +1845,9 @@ gd = {};
                 .attr( "stroke-width", function ( rolebox )
                 {
                     return rolebox.model.style("border-width");
-                } );
+                } )
+                .attr("x", field("x"))
+                .attr("y", field("y"));
 
             function captionClasses(d) {
                 return "caption " + d.rolebox.model.class();
@@ -1955,11 +1882,11 @@ gd = {};
                 .attr("baseline-shift", "0.3em");
 
             captions
-                .attr("x", function ( line ) { return line.node.model.ex(); })
-                .attr("y", function ( line, i ) { return line.node.model.ey() + (i - (line.node.captionLines.length - 1) / 2) * line.node.captionLineHeight; })
-                .attr( "fill", function ( line ) { return line.node.model.style( "color" ); } )
-                .attr( "font-size", function ( line ) { return line.node.model.style( "font-size" ); } )
-                .attr( "font-family", function ( line ) { return line.node.model.style( "font-family" ); } )
+                .attr("x", function ( line ) { return line.rolebox.model.ex(); })
+                .attr("y", function ( line, i ) { return line.rolebox.model.ey() + (i - (line.rolebox.captionLines.length - 1) / 2) * line.rolebox.captionLineHeight; })
+                .attr( "fill", function ( line ) { return line.rolebox.model.style( "color" ); } )
+                .attr( "font-size", function ( line ) { return line.rolebox.model.style( "font-size" ); } )
+                .attr( "font-family", function ( line ) { return line.rolebox.model.style( "font-family" ); } )
                 .text(function(d) { return d.caption; });
         }
 
