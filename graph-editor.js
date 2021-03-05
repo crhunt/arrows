@@ -62,7 +62,7 @@ window.onload = function()
 
             nodeRings.enter().append("circle")
                 .attr("class", "node ring")
-                .call( d3.behavior.drag().on( "drag", dragRing ).on( "dragend", dragEnd ) );
+                .call( d3.behavior.drag().on( "drag", dragNodeRing ).on( "dragend", dragEnd ) );
 
             nodeRings
                 .attr("r", function(node) {
@@ -138,12 +138,12 @@ window.onload = function()
             roleboxRings.exit().remove();
 
             roleboxRings.enter().append("rect")
-                .attr("class", "rolebox ring");
-                //.call( d3.behavior.drag().on( "drag", dragRing ).on( "dragend", dragEnd ) );
+                .attr("class", "rolebox ring")
+                .call( d3.behavior.drag().on( "drag", dragRoleboxRing ).on( "dragend", dragRoleboxEnd ) );
 
             roleboxRings
                 .attr("height", function(rolebox) {
-                    return 0.5 * rolebox.radius.outside() + 5;
+                    return 0.5 * rolebox.radius.outside();
                 })
                 .attr("width", function(rolebox) {
                     return 2 * rolebox.radius.outside() + 5;
@@ -229,6 +229,29 @@ window.onload = function()
         return closestNode;
     }
 
+    function findClosestOverlappingRolebox( rolebox )
+    {
+        var closestRolebox = null;
+        var closestDistance = Number.MAX_VALUE;
+
+        var allRoleboxes = graphModel.roleboxList();
+
+        for ( var i = 0; i < allRoleboxes.length; i++ )
+        {
+            var candidateRolebox = allRoleboxes[i];
+            if ( candidateRolebox !== rolebox )
+            {
+                var candidateDistance = rolebox.distanceTo( candidateRolebox ) * graphModel.internalScale();
+                if ( candidateDistance < 50 && candidateDistance < closestDistance )
+                {
+                    closestRolebox = candidateRolebox;
+                    closestDistance = candidateDistance;
+                }
+            }
+        }
+        return closestRolebox;
+    }
+
     function drag()
     {
         var node = this.__data__.model;
@@ -243,7 +266,51 @@ window.onload = function()
         if ( !newNode )
         {
             newNode = graphModel.createNode().x( d3.event.x ).y( d3.event.y );
-            newRelationship = graphModel.createRelationship( node, newNode );
+            newRelationship = graphModel.createRelationship( node, newNode, "N2N" );
+        }
+        var connectionNode = findClosestOverlappingNode( newNode );
+        if ( connectionNode )
+        {
+            newRelationship.end = connectionNode
+        } else
+        {
+            newRelationship.end = newNode;
+        }
+        node = newNode;
+        node.drag(d3.event.dx, d3.event.dy);
+        diagram.scaling(gd.scaling.growButDoNotShrink);
+        draw();
+    }
+
+    function dragNodeRing()
+    {
+        var node = this.__data__.model;
+        if ( !newRolebox )
+        {
+            newRolebox = graphModel.createRolebox().x( d3.event.x ).y( d3.event.y );
+            newRelationship = graphModel.createRelationship( node, newRolebox, "N2RB" );
+        }
+        var connectionRolebox = findClosestOverlappingRolebox( newRolebox );
+        if ( connectionRolebox )
+        {
+            newRelationship.end = connectionRolebox
+        } else
+        {
+            newRelationship.end = newRolebox;
+        }
+        rolebox = newRolebox;
+        rolebox.drag(d3.event.dx, d3.event.dy);
+        diagram.scaling(gd.scaling.growButDoNotShrink);
+        draw();
+    }
+
+    function dragRoleboxRing()
+    {
+        var rolebox = this.__data__.model;
+        if ( !newNode )
+        {
+            newNode = graphModel.createNode().x( d3.event.x ).y( d3.event.y );
+            newRelationship = graphModel.createRelationship( rolebox, newNode, "RB2N" );
         }
         var connectionNode = findClosestOverlappingNode( newNode );
         if ( connectionNode )
@@ -282,7 +349,7 @@ window.onload = function()
             newRolebox.dragRoleboxEnd();
             if ( newRelationship && newRelationship.end !== newRolebox )
             {
-                graphModel.deleteNode( newRolebox );
+                graphModel.deleteRolebox( newRolebox );
             }
         }
         newRolebox = null;

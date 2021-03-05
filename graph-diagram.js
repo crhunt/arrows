@@ -185,9 +185,10 @@ gd = {};
 
         var Relationship = function(start, end) {
             var relationshipType;
-            var relationshipPredicate = "binary";
+            var relationshipPredicate = "subtype";
             var classes = [];
             var attachedRoleboxes = [];
+            var connType = "N2RB";
             var properties = new Properties(model.stylePrototype.relationshipProperties);
 
             this.class = function(classesString) {
@@ -231,11 +232,19 @@ gd = {};
                     if (relationshipPredText.length > 0) {
                         relationshipPredicate = relationshipPredText;
                     } else {
-                        relationshipPredicate = "binary";
+                        relationshipPredicate = "subtype";
                     }
                     return this;
                 }
                 return relationshipPredicate;
+            };
+
+            this.connType = function(connText) {
+                if (arguments.length == 1) {
+                    connType = connText;
+                    return this;
+                }
+                return connType;
             };
 
             this.start = start;
@@ -245,6 +254,11 @@ gd = {};
                 var oldStart = this.start;
                 this.start = this.end;
                 this.end = oldStart;
+                if (this.connType == "N2RB") {
+                    this.connType = "RB2N";
+                } else if (this.connType == "RB2N") {
+                    this.connType = "N2RB";
+                }
             };
 
             this.properties = function() {
@@ -443,12 +457,20 @@ gd = {};
             delete nodes[node.id];
         };
 
+        model.deleteRolebox = function(rolebox) {
+            relationships = relationships.filter(function (relationship) {
+                return !(relationship.start === rolebox || relationship.end == rolebox);
+            });
+            delete roleboxes[rolebox.id];
+        };
+
         model.deleteRelationship = function(relationship) {
             relationships.splice(relationships.indexOf(relationship), 1);
         };
 
-        model.createRelationship = function(start, end) {
+        model.createRelationship = function(start, end, connType) {
             var relationship = new Relationship(start, end);
+            relationship.connType = connType;
             // Create roleboxes for relationship: This will be changed to reflect predicate type
             //var roleboxId = generateRoleboxId();
             //var rolebox = new Rolebox();
@@ -487,6 +509,13 @@ gd = {};
         model.lookupRolebox = function(roleboxId) {
             return roleboxes[roleboxId];
         };
+
+        model.lookupAny = function(anyID) {
+            if (!nodes[anyID]) {
+                return roleboxes[anyID];
+            }
+            return nodes[nodeId];
+        }
 
         model.relationshipList = function() {
             return relationships;
@@ -631,8 +660,19 @@ gd = {};
                 var offset = (relationship.start === nominatedStart ? 1 : -1) *
                     offsetStep * (i - (group.length - 1) / 2);
 
-                var start = nodesById[relationship.start.id];
-                var end = nodesById[relationship.end.id];
+                if (relationship.connType == "N2RB") {
+                    var start = nodesById[relationship.start.id];
+                    var end = roleboxesById[relationship.end.id];
+                } else if (relationship.connType == "RB2N") {
+                    var start = roleboxesById[relationship.start.id];
+                    var end = nodesById[relationship.end.id];
+                } else if (relationship.connType == "RB2RB") {
+                    var start = roleboxesById[relationship.start.id];
+                    var end = roleboxesById[relationship.end.id];
+                } else {
+                    var start = nodesById[relationship.start.id];
+                    var end = nodesById[relationship.end.id];
+                }
                 var arrow = horizontalArrow( relationship, start, end, offset );
 
                 var layoutRelationship = {
@@ -948,7 +988,8 @@ gd = {};
                 var relationshipMarkup = d3.select(this);
                 var fromId = relationshipMarkup.attr("data-from");
                 var toId = relationshipMarkup.attr("data-to");
-                var relationship = model.createRelationship(model.lookupNode(fromId), model.lookupNode(toId));
+                var connType = relationshipMarkup.attr("conn-type");
+                var relationship = model.createRelationship(model.lookupAny(fromId), model.lookupAny(toId), connType);
                 relationship.class(relationshipMarkup.attr("class") || "");
                 relationshipMarkup.select("span.type" ).each(function() {
                     relationship.relationshipType(d3.select(this).text());
@@ -1020,6 +1061,7 @@ gd = {};
             model.relationshipList().forEach(function(relationship) {
                 var li = ul.append("li")
                     .attr("class", relationship.class().join(" "))
+                    .attr("conn-type", relationship.connType)
                     .attr("data-from", relationship.start.id)
                     .attr("data-to", relationship.end.id);
 
