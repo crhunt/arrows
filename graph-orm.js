@@ -82,3 +82,30 @@ function subtypeOutline(start, end, arrowWidth) {
         }
     };
 };
+
+function N2RB_Outline(start, end, arrowWidth) {
+    var RBheight = 0.25 * start;
+    var shaftRadius = arrowWidth / 2;
+    var headRadius = arrowWidth * 2;
+    var headLength = headRadius * 2;
+    var RBend = start < end ? end + start : end;
+    var RBstart = start > end ? start - end : start;
+    var shoulder = start < end ? RBend - headLength : RBend + headLength;
+    return {
+        outline: [
+            "M", RBstart, shaftRadius,
+            "L", shoulder, shaftRadius,
+            "L", shoulder, headRadius,
+            "L", RBend, 0,
+            "L", shoulder, -headRadius,
+            "L", shoulder, -shaftRadius,
+            "L", RBstart, -shaftRadius,
+            "Z"
+        ].join(" "),
+        apex: {
+            //x: RBstart + (shoulder - RBstart) / 2,
+            x: 0,
+            y: 0
+        }
+    };
+};

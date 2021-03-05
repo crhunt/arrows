@@ -125,6 +125,16 @@ window.onload = function()
                 })
                 .attr("stroke", "none")
                 .attr("fill", "rgba(255, 255, 255, 0)")
+                .attr("transform", function ( rolebox )
+                {
+                    var to_r = rolebox.model.toRB;
+                    var ytrans = - 0.25* rolebox.radius.mid();
+                    if ( to_r.end.isLeftOf(to_r.start) ) {
+                        ytrans = 2*rolebox.model.ey() + 0.25* rolebox.radius.mid();
+                        return "translate(" + 2*rolebox.model.ex() + "," + ytrans + ") rotate(180)";
+                    }
+                    return "translate(0," + ytrans + ")";
+                } )
                 .attr("x", function(rolebox) {
                     return rolebox.x;
                 })
@@ -151,6 +161,16 @@ window.onload = function()
                 .attr("fill", "rgba(255, 255, 255, 0)")
                 .attr("stroke", "none")
                 //.attr("stroke-width", "10px")
+                .attr("transform", function ( rolebox )
+                {
+                    var to_r = rolebox.model.toRB;
+                    var ytrans = - 0.25* rolebox.radius.mid();
+                    if ( to_r.end.isLeftOf(to_r.start) ) {
+                        ytrans = 2*rolebox.model.ey() + 0.25* rolebox.radius.mid();
+                        return "translate(" + 2*rolebox.model.ex() + "," + ytrans + ") rotate(180)";
+                    }
+                    return "translate(0," + ytrans + ")";
+                } )
                 .attr("x", function(rolebox) {
                     return rolebox.x - 0.5 * rolebox.radius.mid();
                 })
@@ -177,6 +197,16 @@ window.onload = function()
                 .attr("fill", "rgba(255, 255, 255, 0)")
                 .attr("stroke", "none")
                 //.attr("stroke-width", "10px")
+                .attr("transform", function ( rolebox )
+                {
+                    var to_r = rolebox.model.toRB;
+                    var ytrans = - 0.25* rolebox.radius.mid();
+                    if ( to_r.end.isLeftOf(to_r.start) ) {
+                        ytrans = 2*rolebox.model.ey() + 0.25* rolebox.radius.mid();
+                        return "translate(" + 2*rolebox.model.ex() + "," + ytrans + ") rotate(180)";
+                    }
+                    return "translate(0," + ytrans + ")";
+                } )
                 .attr("x", function(rolebox) {
                     return rolebox.x + 2 * rolebox.radius.mid();
                 })

@@ -273,6 +273,9 @@ gd = {};
             var prototypePosition;
             var caption;
             var classes = [];
+            var toRB;
+            var fromRB;
+            var fromRelationship;
             var properties = new Properties(model.stylePrototype.roleboxProperties);
 
             this.class = function(classesString) {
@@ -379,6 +382,22 @@ gd = {};
                 return this.x() < rolebox.x();
             };
 
+            this.toRB = function(relation) {
+                if (arguments.length == 1) {
+                    toRB = relation;
+                    return this;
+                }
+                return toRB;
+            };
+
+            this.fromRB = function(relation) {
+                if (arguments.length == 1) {
+                    fromRB = relation;
+                    return this;
+                }
+                return fromRB;
+            };
+
             this.caption = function(captionText) {
                 if (arguments.length == 1) {
                     caption = captionText;
@@ -471,6 +490,14 @@ gd = {};
         model.createRelationship = function(start, end, connType) {
             var relationship = new Relationship(start, end);
             relationship.connType = connType;
+            if ( connType = "N2RB") {
+                end.toRB = relationship;
+            } else if (connType = "RB2N") {
+                start.fromRB = relationship;
+            } else if (connType = "RB2RB") {
+                start.fromRB = relationship;
+                end.toRB = relationship;
+            }
             // Create roleboxes for relationship: This will be changed to reflect predicate type
             //var roleboxId = generateRoleboxId();
             //var rolebox = new Rolebox();
@@ -1097,7 +1124,8 @@ gd = {};
 
     gd.horizontalArrowOutline = function(predicate, start, end, arrowWidth) {
         if (predicate == "subtype") {
-            return subtypeOutline(start, end, arrowWidth);
+            //return subtypeOutline(start, end, arrowWidth);
+            return N2RB_Outline(start, end, arrowWidth);
         } else {
             return binaryPredicateOutline(start, end, arrowWidth);
         }
@@ -1859,6 +1887,11 @@ gd = {};
                 return d.model.class().join(" ") + " " + "rolebox-id-" + d.model.id;
             }
 
+            function rotateRoleboxIfRightToLeft (d) {
+                var to_r = d.model.toRB;
+                return to_r.end.model.isLeftOf( to_r.start.model ) ? "rotate(90)" : null;
+            }
+
             var boxes = view.selectAll("rect.rolebox")
                 .data(roleboxes);
 
@@ -1876,6 +1909,16 @@ gd = {};
                 {
                     return 0.5 * rolebox.radius.mid();
                 } )
+                .attr("transform", function ( rolebox )
+                {
+                    var to_r = rolebox.model.toRB;
+                    var ytrans = - 0.25* rolebox.radius.mid();
+                    if ( to_r.end.isLeftOf(to_r.start) ) {
+                        ytrans = 2*rolebox.model.ey() + 0.25* rolebox.radius.mid();
+                        return "translate(" + 2*rolebox.model.ex() + "," + ytrans + ") rotate(180)";
+                    }
+                    return "translate(0," + ytrans + ")";
+                } )
                 .attr( "fill", function ( rolebox )
                 {
                     return rolebox.model.style("background-color");
@@ -1890,6 +1933,7 @@ gd = {};
                 } )
                 .attr("x", field("x"))
                 .attr("y", field("y"));
+;
 
             function captionClasses(d) {
                 return "caption " + d.rolebox.model.class();
@@ -1926,6 +1970,16 @@ gd = {};
             captions
                 .attr("x", function ( line ) { return line.rolebox.model.ex(); })
                 .attr("y", function ( line, i ) { return line.rolebox.model.ey() + (i - (line.rolebox.captionLines.length - 1) / 2) * line.rolebox.captionLineHeight; })
+                .attr("transform", function ( line )
+                {
+                    var to_r = line.rolebox.model.toRB;
+                    var ytrans = - 0.25* line.rolebox.radius.mid();
+                    if ( to_r.end.isLeftOf(to_r.start) ) {
+                        ytrans = 2*line.rolebox.model.ey() + 0.25* line.rolebox.radius.mid();
+                        return "translate(" + 2*line.rolebox.model.ex() + "," + ytrans + ") rotate(180)";
+                    }
+                    return "translate(0," + ytrans + ")";
+                } )
                 .attr( "fill", function ( line ) { return line.rolebox.model.style( "color" ); } )
                 .attr( "font-size", function ( line ) { return line.rolebox.model.style( "font-size" ); } )
                 .attr( "font-family", function ( line ) { return line.rolebox.model.style( "font-family" ); } )
