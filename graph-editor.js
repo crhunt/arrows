@@ -112,7 +112,7 @@ window.onload = function()
 
             roleboxOverlays.enter().append("rect")
                 .attr("class", "rolebox overlay")
-                .call( d3.behavior.drag().on( "drag", drag ).on( "dragend", dragRoleboxEnd ) );
+                .call( d3.behavior.drag().on( "drag", drag ).on( "dragend", dragEnd ) );
                 //.on('contextmenu', d3.contextMenu(nodeOptions))
                 //.on( "dblclick", editNode );
 
@@ -139,7 +139,7 @@ window.onload = function()
 
             roleboxRingsLeft.enter().append("rect")
                 .attr("class", "rolebox ring left")
-                .call( d3.behavior.drag().on( "drag", dragRoleboxRing ).on( "dragend", dragRoleboxEnd ) );
+                .call( d3.behavior.drag().on( "drag", dragRoleboxRing ).on( "dragend", dragEnd ) );
 
             roleboxRingsLeft
                 .attr("height", function(rolebox) {
@@ -165,7 +165,7 @@ window.onload = function()
 
             roleboxRingsRight.enter().append("rect")
                 .attr("class", "rolebox ring right")
-                .call( d3.behavior.drag().on( "drag", dragRoleboxRing ).on( "dragend", dragRoleboxEnd ) );
+                .call( d3.behavior.drag().on( "drag", dragRoleboxRing ).on( "dragend", dragEnd ) );
 
             roleboxRingsRight
                 .attr("height", function(rolebox) {
@@ -319,11 +319,12 @@ window.onload = function()
         var connectionRolebox = findClosestOverlappingRolebox( newRolebox );
         if ( connectionRolebox )
         {
-            newRelationship.end = connectionRolebox
+            newRelationship.end = connectionRolebox;
         } else
         {
             newRelationship.end = newRolebox;
         }
+        node.dragEnd();
         rolebox = newRolebox;
         rolebox.drag(d3.event.dx, d3.event.dy);
         diagram.scaling(gd.scaling.growButDoNotShrink);
@@ -341,11 +342,12 @@ window.onload = function()
         var connectionNode = findClosestOverlappingNode( newNode );
         if ( connectionNode )
         {
-            newRelationship.end = connectionNode
+            newRelationship.end = connectionNode;
         } else
         {
             newRelationship.end = newNode;
         }
+        rolebox.dragEnd();
         node = newNode;
         node.drag(d3.event.dx, d3.event.dy);
         diagram.scaling(gd.scaling.growButDoNotShrink);
@@ -363,16 +365,9 @@ window.onload = function()
             }
         }
         newNode = null;
-        save( formatMarkup() );
-        diagram.scaling(gd.scaling.centerOrScaleDiagramToFitSvgSmooth);
-        draw();
-    }
-
-    function dragRoleboxEnd()
-    {
         if ( newRolebox )
         {
-            newRolebox.dragRoleboxEnd();
+            newRolebox.dragEnd();
             if ( newRelationship && newRelationship.end !== newRolebox )
             {
                 graphModel.deleteRolebox( newRolebox );
