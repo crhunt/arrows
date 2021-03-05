@@ -63,6 +63,15 @@ circle.node.ring:hover {
     stroke: rgba(150, 150, 255, 0.5);
 }
 
+rect.rolebox.overlay:hover {
+    fill: rgba(150, 150, 255, 0.5);
+}
+
+rect.rolebox.ring:hover {
+    stroke: rgba(150, 150, 255, 0.5);
+    fill: rgba(150, 150, 255, 0.5);
+}
+
 path.relationship.overlay:hover {
     fill: rgba(150, 150, 255, 0.5);
     stroke: rgba(150, 150, 255, 0.5);

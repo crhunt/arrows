@@ -132,27 +132,53 @@ window.onload = function()
                     return rolebox.y;
                 });
 
-            var roleboxRings = view.selectAll("rect.rolebox.ring")
+            var roleboxRingsLeft = view.selectAll("rect.rolebox.ring.left")
                 .data(layoutModel.roleboxes);
 
-            roleboxRings.exit().remove();
+            roleboxRingsLeft.exit().remove();
 
-            roleboxRings.enter().append("rect")
-                .attr("class", "rolebox ring")
+            roleboxRingsLeft.enter().append("rect")
+                .attr("class", "rolebox ring left")
                 .call( d3.behavior.drag().on( "drag", dragRoleboxRing ).on( "dragend", dragRoleboxEnd ) );
 
-            roleboxRings
+            roleboxRingsLeft
                 .attr("height", function(rolebox) {
-                    return 0.5 * rolebox.radius.outside();
+                    return 0.5 * rolebox.radius.mid();
                 })
                 .attr("width", function(rolebox) {
-                    return 2 * rolebox.radius.outside() + 5;
+                    return 0.5 * rolebox.radius.mid();
                 })
-                .attr("fill", "none")
-                .attr("stroke", "rgba(255, 255, 255, 0)")
-                .attr("stroke-width", "10px")
+                .attr("fill", "rgba(255, 255, 255, 0)")
+                .attr("stroke", "none")
+                //.attr("stroke-width", "10px")
                 .attr("x", function(rolebox) {
-                    return rolebox.x;
+                    return rolebox.x - 0.5 * rolebox.radius.mid();
+                })
+                .attr("y", function(rolebox) {
+                    return rolebox.y;
+                });
+            
+            var roleboxRingsRight = view.selectAll("rect.rolebox.ring.right")
+                .data(layoutModel.roleboxes);
+
+            roleboxRingsRight.exit().remove();
+
+            roleboxRingsRight.enter().append("rect")
+                .attr("class", "rolebox ring right")
+                .call( d3.behavior.drag().on( "drag", dragRoleboxRing ).on( "dragend", dragRoleboxEnd ) );
+
+            roleboxRingsRight
+                .attr("height", function(rolebox) {
+                    return 0.5 * rolebox.radius.mid();
+                })
+                .attr("width", function(rolebox) {
+                    return 0.5 * rolebox.radius.mid();
+                })
+                .attr("fill", "rgba(255, 255, 255, 0)")
+                .attr("stroke", "none")
+                //.attr("stroke-width", "10px")
+                .attr("x", function(rolebox) {
+                    return rolebox.x + 2 * rolebox.radius.mid();
                 })
                 .attr("y", function(rolebox) {
                     return rolebox.y;
